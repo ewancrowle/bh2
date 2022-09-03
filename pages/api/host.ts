@@ -1,65 +1,58 @@
-import {NextApiRequest, NextApiResponse} from "next";
-import prisma from "../../libs/prisma";
-import {hop} from "../../libs/hop";
-import {ChannelType} from "@onehop/js";
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { hop } from "../../libs/hop";
+import { ChannelType } from "@onehop/js";
+import { Player, PlayerToken } from "../../libs/player";
+import { Game } from "../../libs/gameState";
 
 export default async function handle(
-    req: NextApiRequest,
-    res: NextApiResponse
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
-    /**
-     * Read the data sent to the server when a user uses
-     * the host form.
-     */
-    const {name}: { name: string } = req.body;
+  let { name, playerToken }: { name: string; playerToken?: PlayerToken } =
+    req.body;
+  if (!name) {
+    return res.status(400).send("You didn't pick a name");
+  }
 
-    /**
-     * If the `name` key is not in the body, the server uses
-     * the `400` code to warn the host that the body is invalid.
-     */
-    if (!name) {
-        return res.status(400).send("Body has no name key.");
+  // Generate 4 digit game code and create a hop channel
+  const generatedCode = (Math.floor(Math.random() * (0xffff - 0x1000)) + 0x1000)
+    .toString(16)
+    .toUpperCase();
+  const gameChannelId = `game-${generatedCode}`;
+
+  // User object for host
+  const user: Player = {
+    name: name,
+    color: Math.floor(Math.random() * 16777215).toString(16),
+  };
+
+  const channel = await hop.channels.create<Game>(
+    ChannelType.PUBLIC,
+    gameChannelId,
+    {
+      state: {
+        host: name,
+        state: "WAITING_LOBBY",
+        players: [user],
+
+        points: { [name]: 0 },
+      },
     }
+  );
 
-    /**
-     * Set up a new user
-     */
-    const user = await prisma.user.create(
-        {
-            data: {
-                name: name,
-                color: Math.floor(Math.random() * 16777215).toString(16),
-            }
-        }
-    )
+  // Generate token for user and add to game channel
+  if (!playerToken) {
+    playerToken = (await hop.channels.tokens.create()).id;
+  }
+  await hop.channels.subscribeToken(gameChannelId, playerToken);
 
-    /**
-     * Use Hop to make a new channel!
-     */
-    const chan = await hop.channels.create(ChannelType.PUBLIC);
-
-    /**
-     * Set up a new game
-     */
-    const game = await prisma.game.create(
-        {
-            data: {
-                name: `${name}'s game`,
-                hostId: user.id,
-                /**
-                 * Base16 in the range 0x1000 to 0xFFFF so that
-                 * you are given a [A-F,0-9] 16-bit String
-                 * e.g 52E2, D21C, 4B2E
-                 */
-                code: (Math.floor(Math.random() * (0xFFFF - 0x1000)) + 0x1000).toString(16).toUpperCase(),
-                hopChannelID: chan.id
-            }
-        }
-    )
-
-    res.json({
-        userId: user.id,
-        gameId: game.id,
-        gameCode: game.code,
-    });
+  res.json({
+    userId: playerToken,
+    player: user,
+    game: {
+      gameId: gameChannelId,
+      gameCode: generatedCode,
+    },
+  });
 }

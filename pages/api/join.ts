@@ -1,59 +1,57 @@
-import {NextApiRequest, NextApiResponse} from "next";
-import prisma from "../../libs/prisma";
+import { NextApiRequest, NextApiResponse } from "next";
+import { publish } from "../../libs/gameEvents";
+import { hop } from "../../libs/hop";
+import { Player, PlayerToken } from "../../libs/player";
 
 export default async function handle(
-    req: NextApiRequest,
-    res: NextApiResponse
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
-    /**
-     * Read the data sent to the server when a user uses
-     * the join form.
-     */
-    const {name, code}: { name: string, code: string } = req.body;
+  let {
+    name,
+    playerToken,
+    code,
+  }: { name: string; playerToken?: PlayerToken; code: string } = req.body;
 
-    /**
-     * If the `name` key is not in the body, the server uses
-     * the `400` code to warn the host that the body is invalid.
-     */
-    if (!name) {
-        return res.status(400).send("Body has no name key.");
-    }
+  if (!name) {
+    return res.status(400).send("You didn't pick a name");
+  }
 
-    /**
-     * If the `code` key is not in the body, the server uses
-     * the `400` code to warn the host that the body is invalid.
-     */
-    if (!code) {
-        return res.status(400).send("Body has no name key.");
-    }
+  if (!code) {
+    return res.status(400).send("You didn't specify a game id to join.");
+  }
 
-    /**
-     * Check if the game is online
-     */
-    const game = await prisma.game.findUnique({
-        where: {
-            code: code
-        }
-    });
+  /**
+   * Check if the game is online
+   */
+  const gameChannelId = `game-${code}`;
+  const gameChannel = await hop.channels.get(gameChannelId);
+  if (!gameChannel?.state) {
+    return res.status(404).send("Game code not found.");
+  }
 
-    if (!game) {
-        return res.status(404).send("Game code not found.");
-    }
+  /**
+   * Set up a new user
+   */
+  const user: Player = {
+    name: name,
+    color: Math.floor(Math.random() * 16777215).toString(16),
+  };
 
-    /**
-     * Set up a new user
-     */
-    const user = await prisma.user.create(
-        {
-            data: {
-                name: name,
-                color: Math.floor(Math.random() * 16777215).toString(16),
-            }
-        }
-    );
+  // Generate token for user and add to game channel
+  if (!playerToken) {
+    playerToken = (await hop.channels.tokens.create()).id;
+  }
+  await hop.channels.subscribeToken(gameChannelId, playerToken);
 
-    res.json({
-        userId: user.id,
-        gameId: game.id,
-    });
+  res.json({
+    userId: playerToken,
+    game: {
+      gameId: gameChannelId,
+      gameCode: code,
+    },
+    player: user,
+  });
+
+  publish(gameChannelId, "PLAYER_JOIN", user);
 }
