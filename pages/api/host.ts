@@ -11,7 +11,7 @@ export default async function handle(
      * Read the data sent to the server when a user uses
      * the host form.
      */
-    const {name}: {name: string} = req.body;
+    const {name}: { name: string } = req.body;
 
     /**
      * If the `name` key is not in the body, the server uses

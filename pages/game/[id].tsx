@@ -1,7 +1,6 @@
 import {GetStaticPaths, GetStaticProps} from "next";
 import prisma from "../../libs/prisma";
 import Head from "next/head";
-import Link from "next/link";
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const codes = (await prisma.game.findMany({
@@ -11,7 +10,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     })).map((c) => c.code)
 
     return {
-        paths: codes.map((c) => ({ params: { id: c } })),
+        paths: codes.map((c) => ({params: {id: c}})),
         fallback: false,
     };
 };
@@ -39,7 +38,7 @@ export default function Home(props) {
         <div>
             <Head>
                 <title>what the deck</title>
-                <meta name="description" content="BuilderHacks 2 by Ewan Crowle and Nick Ciardiello" />
+                <meta name="description" content="BuilderHacks 2 by Ewan Crowle and Nick Ciardiello"/>
             </Head>
             <main className="min-h-screen bg-gray-900 flex justify-center items-center text-gray-300">
                 <div className="">
