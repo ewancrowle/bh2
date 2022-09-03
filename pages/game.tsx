@@ -1,26 +1,25 @@
-import {GetStaticPaths, GetStaticProps} from "next";
-import prisma from "../../libs/prisma";
+import {GetServerSidePropsContext} from "next";
+import prisma from "../libs/prisma";
 import Head from "next/head";
+import getUser from "../libs/getUser";
 
-export const getStaticPaths: GetStaticPaths = async () => {
-    const codes = (await prisma.game.findMany({
-        select: {
-            code: true
-        }
-    })).map((c) => c.code)
-
-    return {
-        paths: codes.map((c) => ({params: {id: c}})),
-        fallback: false,
-    };
-};
-
-export const getStaticProps: GetStaticProps = async (context) => {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
     const game = await prisma.game.findUnique({
         where: {
-            code: context.params.id as string
+            id: context.req.cookies._gid
         }
-    })
+    });
+
+    if (!game) {
+        return {
+            redirect: {
+                permanent: false,
+                destination: '/',
+            },
+        };
+    }
+
+    const user = await getUser(context.req);
 
     return {
         props: {
@@ -29,11 +28,17 @@ export const getStaticProps: GetStaticProps = async (context) => {
                 code: game.code,
                 name: game.name
             },
+            user: {
+                id: user.id,
+                name: user.name,
+                host: user.id === game.hostId,
+            }
         },
     };
-};
+}
 
 export default function Home(props) {
+
     return (
         <div>
             <Head>
@@ -51,7 +56,7 @@ export default function Home(props) {
 
                 <div className="px-24 items-center">
                     <p className="font-bold">
-                        you&apos;re in
+                        you&apos;re {props.user.host ? "hosting" : "in"}
                     </p>
                     <p className="font-bold">
                         {props.game.name} ({props.game.code})
@@ -59,5 +64,5 @@ export default function Home(props) {
                 </div>
             </main>
         </div>
-    )
+    );
 }

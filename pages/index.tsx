@@ -1,7 +1,10 @@
 import Head from "next/head";
 import Link from "next/link";
+import Cookies from "js-cookie";
+import {useRouter} from "next/router";
 
 export default function Home() {
+    const router = useRouter();
     return (
         <div>
             <Head>
@@ -17,22 +20,66 @@ export default function Home() {
                     <p className="text-gray-600">a game by ewan and nick</p>
                 </div>
 
-                <form className="px-24 items-center">
+                <form className="px-24 items-center" onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.target as any;
+                    fetch(`http://localhost:3000/api/join`, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({
+                            name: form.name.value,
+                            code: form.code.value
+                        }),
+                    })
+                        .then(async (res) => {
+                            if (!res.ok) {
+                                /**
+                                 * If the server gives a status code other than 2xx,
+                                 * throw an error.
+                                 */
+                                const text = await res.text();
+                                console.error(text);
+                                return;
+                            }
+
+                            const data: {
+                                userId: string;
+                                gameId: string;
+                            } = await res.json();
+
+                            Cookies.set("_uid", data.userId, {
+                                expires: 1,
+
+                            });
+
+                            Cookies.set("_gid", data.gameId, {
+                                expires: 1,
+
+                            });
+
+                            await router.push("/game");
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
+                }}>
                     <div className="mb-6">
                         <label className="font-bold" htmlFor="inline-full-name">
                             enter your name
                         </label>
                         <input maxLength={12}
+                               name="name"
                                className="bg-gray-200 appearance-none lowercase border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
-                               id="inline-full-name" type="text" placeholder="joe"/>
+                               id="inline-name" type="text" placeholder="joe"/>
                     </div>
                     <div className="mb-6">
                         <label className="font-bold" htmlFor="inline-full-name">
                             game code
                         </label>
                         <input maxLength={4}
+                               name="code"
                                className="bg-gray-200 appearance-none uppercase border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
-                               id="inline-full-name" type="text" placeholder="J93X"/>
+                               id="inline-code" type="text" placeholder="J93X"/>
                     </div>
                     <div className="flex">
                         <button className="text-gray-700 font-bold bg-gray-800 rounded w-2/3 py-2 px-4">
@@ -47,5 +94,5 @@ export default function Home() {
                 </form>
             </main>
         </div>
-    )
+    );
 }

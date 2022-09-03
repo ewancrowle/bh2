@@ -49,13 +49,16 @@ export default function Home() {
 
                             Cookies.set("_uid", data.userId, {
                                 expires: 1,
+
                             });
 
                             Cookies.set("_gid", data.gameId, {
                                 expires: 1,
+
                             });
 
-                            router.push(`/game/${data.gameCode}`);
+                            console.log(`New game ${data.gameCode}`);
+                            await router.push("/game");
                         })
                         .catch((e) => {
                             console.log(e);
@@ -82,5 +85,5 @@ export default function Home() {
                 </form>
             </main>
         </div>
-    )
+    );
 }
