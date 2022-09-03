@@ -62,14 +62,6 @@ export default function Home() {
 
                 setPlayerToken(data.userId);
                 setGameId(data.game.gameId);
-                /*
-                Cookies.set("_token", data.userId, {
-                  expires: 1,
-                });
-
-                Cookies.set("_token", data.gameId, {
-                  expires: 1,
-                });*/
 
                 console.log(`New game ${data.game.gameCode}`);
                 console.log(data);

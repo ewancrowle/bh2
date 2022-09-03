@@ -1,11 +1,14 @@
 import { useReadChannelState } from "@onehop/react";
 import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
-import GameContent from "../components/game/GameContent";
-import { useGameId } from "../hooks/useGameId";
-import { Game } from "../libs/gameState";
+import { useRouter } from "next/router";
+import { GameContent } from "../../components/game/GameContent";
+import { useGameId } from "../../hooks/useGameId";
+import { Game } from "../../libs/gameState";
 
 export default function GamePage(props) {
+  const router = useRouter();
+  const { id: gameId } = router.query;
   return (
     <div>
       <Head>
@@ -25,7 +28,7 @@ export default function GamePage(props) {
         </div>
 
         <div className="items-center">
-          <GameContent></GameContent>
+          <GameContent gameId={gameId as string}></GameContent>
         </div>
       </main>
     </div>

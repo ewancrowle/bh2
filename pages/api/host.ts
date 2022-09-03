@@ -28,7 +28,7 @@ export default async function handle(
   };
 
   const channel = await hop.channels.create<Game>(
-    ChannelType.PUBLIC,
+    ChannelType.UNPROTECTED,
     gameChannelId,
     {
       state: {

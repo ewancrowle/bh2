@@ -1,26 +1,20 @@
-import { hop } from "@onehop/client";
-import { useEffect } from "react";
-import { useGameId } from "../../hooks/useGameId";
-import { usePlayerToken } from "../../hooks/usePlayerToken";
+import React, { useEffect } from "react";
 import { Game } from "../../libs/gameState";
-import {
-  useConnectionState,
-  useLeap,
-  useReadChannelState,
-} from "@onehop/react";
+import { useReadChannelState } from "@onehop/react";
 
-export default function GameContent() {
-  const { setPlayerToken } = usePlayerToken();
-  const { setGameId } = useGameId();
-
-  const { gameId } = useGameId();
-  const { state, error, subscription } = useReadChannelState<Game>(gameId);
+export const GameContent: React.FC<{
+  gameId: string;
+}> = ({ gameId }, children) => {
+  const { state, error, subscription } = useReadChannelState<Game>(
+    `game-${gameId}`
+  );
 
   return (
     <div>
+      <p>{gameId + ""}</p>
       <p>State: {JSON.stringify(state)}</p>
       <p>Error: {JSON.stringify(error)}</p>
       <p>Subscription: {JSON.stringify(subscription)}</p>
     </div>
   );
-}
+};
