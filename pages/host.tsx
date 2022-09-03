@@ -65,7 +65,7 @@ export default function Home() {
 
                 console.log(`New game ${data.game.gameCode}`);
                 console.log(data);
-                await router.push("/game");
+                await router.push(`/game/${data.game.gameCode}`);
               })
               .catch((e) => {
                 console.log(e);
