@@ -17,8 +17,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     hop.init({
       projectId: "project_NTA2MzczMDA1MDc5ODM4NzU",
-      token:
-        "leap_token_c18zZmQ5NzQwMzExYzBhMmM1NGNhY2U2MjJjOTFjNjIxZl81MDY2NzM4MjQwMjk4MTk4Ng",
+      token: playerToken,
     });
   }, []);
 
