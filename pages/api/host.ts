@@ -32,6 +32,7 @@ export default async function handle(
     gameChannelId,
     {
       state: {
+        id: generatedCode,
         host: name,
         state: "WAITING_LOBBY",
         players: [user],
@@ -43,7 +44,7 @@ export default async function handle(
 
   // Generate token for user and add to game channel
   if (!playerToken) {
-    playerToken = (await hop.channels.tokens.create()).id;
+    playerToken = (await hop.channels.tokens.create(user)).id;
   }
   await hop.channels.subscribeToken(gameChannelId, playerToken);
 

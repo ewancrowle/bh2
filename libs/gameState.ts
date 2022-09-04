@@ -2,6 +2,7 @@ import { Player } from "./player";
 import { Answer, Question } from "./question";
 
 export type Game = {
+  id: string;
   host: string;
   state: GamePhase;
   players: Player[];

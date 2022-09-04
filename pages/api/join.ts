@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { publish } from "../../libs/gameEvents";
+import { Game } from "../../libs/gameState";
 import { hop } from "../../libs/hop";
 import { Player, PlayerToken } from "../../libs/player";
 
@@ -30,6 +31,11 @@ export default async function handle(
     return res.status(404).send("Game code not found.");
   }
 
+  const game = gameChannel.state as Game;
+  if (game.players.find((player) => player.name === name)) {
+    return res.status(400).send("That name is already used. Pick another name");
+  }
+
   /**
    * Set up a new user
    */
@@ -40,9 +46,13 @@ export default async function handle(
 
   // Generate token for user and add to game channel
   if (!playerToken) {
-    playerToken = (await hop.channels.tokens.create()).id;
+    playerToken = (await hop.channels.tokens.create(user)).id;
   }
   await hop.channels.subscribeToken(gameChannelId, playerToken);
+  hop.channels.patchState<Game>(gameChannel, (state) => ({
+    ...state,
+    players: [...state.players, user],
+  }));
 
   res.json({
     userId: playerToken,
