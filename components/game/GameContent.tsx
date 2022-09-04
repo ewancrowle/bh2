@@ -12,8 +12,6 @@ export const GameContent: React.FC<{
         `game-${gameId}`
     );
 
-    return <GameRound game={state}/>;
-
     switch (subscription) {
         case "available": {
             switch (state.state) {
